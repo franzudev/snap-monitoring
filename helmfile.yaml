@@ -1,0 +1,69 @@
+repositories:
+- name: strimzi
+  url: quay.io/strimzi-helm
+  oci: true
+- name: bitnami
+  url: https://charts.bitnami.com/bitnami
+- name: prometheus-community
+  url: https://prometheus-community.github.io/helm-charts
+- name: metrics-server
+  url: https://kubernetes-sigs.github.io/metrics-server
+
+releases:
+- name: metrics-server
+  namespace: kube-system
+  chart: metrics-server/metrics-server
+  version: 3.12.0
+  set:
+  - name: args[0]
+    value: --kubelet-insecure-tls
+- name: minio
+  namespace: monitoring
+  chart: bitnami/minio
+  version: 13.6.2
+  set:
+  - name: persistence.enabled
+    value: false
+  - name: defaultBuckets
+    value: thanos
+  - name: auth.rootPassword
+    value: bSezNGxAwT
+- name: thanos
+  namespace: monitoring
+  chart: bitnami/thanos
+  version: 13.2.2
+  values:
+  - values/thanos.yaml
+  hooks:
+  - events: ["postuninstall"]
+    showlogs: true
+    command: "kubectl"
+    args: ["delete", "pvc", "-n", "monitoring", "data-thanos-storegateway-0"]
+- name: prometheus-stack
+  namespace: monitoring
+  chart: prometheus-community/kube-prometheus-stack
+  version: 56.9.0
+  values:
+  - values/prometheus.yaml
+  hooks:
+  - events: ["postuninstall"]
+    showlogs: true
+    command: "kubectl"
+    args: ["delete", "svc", "-n", "kube-system", "prometheus-stack-kube-prom-kubelet"]
+- name: strimzi-operator
+  namespace: strimzi
+  chart: strimzi/strimzi-kafka-operator
+  version: 0.39.0
+  hooks:
+  - events: ["postsync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "-f", "resources/kafka.yaml"]
+  - events: ["postuninstall"]
+    showlogs: true
+    command: "kubectl"
+    args: ["delete", "-f", "resources/kafka.yaml"]
+- name: postgre
+  namespace: data
+  chart: bitnami/postgresql
+  version: 14.1.0

@@ -1,0 +1,7 @@
+type: S3
+config:
+  endpoint: "minio.monitoring:9000"
+  bucket: "thanos"
+  access_key: "admin"
+  secret_key: "bSezNGxAwT"
+  insecure: true
