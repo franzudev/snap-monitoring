@@ -1,0 +1,17 @@
+prometheus:
+  prometheusSpec:
+    thanos:
+      image: quay.io/thanos/thanos:v0.34.0
+      objectStorageConfig:
+        secret:
+          type: S3
+          config:
+            endpoint: "minio.monitoring:9000"
+            bucket: "thanos"
+            access_key: "admin"
+            secret_key: "bSezNGxAwT"
+  insecure: true
+  thanosService:
+    enabled: true
+  thanosServiceMonitor:
+    enabled: true
